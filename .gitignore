@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+
+# Banco de Dados (Não envie seu banco de testes)
+*.db
+
+# IDEs
+.vscode/
+.idea/

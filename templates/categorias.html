@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>🏷️ Gerenciar Categorias</h1>
+    <p>Você precisa cadastrar uma categoria antes de adicionar produtos.</p>
+    
+    <form action="/categorias/nova" method="post" style="margin-bottom: 30px;">
+        <input type="text" name="nome" placeholder="Ex: Hardware" required>
+        <button type="submit">Cadastrar Categoria</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categorias %}
+            <tr>
+                <td>{{ cat.id }}</td>
+                <td>{{ cat.nome }}</td>
+                <td><a href="/categorias/deletar/{{ cat.id }}" style="color: #ff5555;">Excluir</a></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; padding: 20px;">
+                    Nenhuma categoria encontrada. Cadastre uma acima!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
