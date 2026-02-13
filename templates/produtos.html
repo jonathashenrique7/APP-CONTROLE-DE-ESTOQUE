@@ -1,39 +1,101 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="card">
+
+<div class="card" x-data="{ busca: '' }">
     <h1>Gerenciar Produtos</h1>
-    <form action="/produtos/novo" method="post">
+
+    <div style="margin-bottom: 20px;">
+        <input type="text" 
+               x-model="busca" 
+               placeholder="🔍 Pesquisar produto por nome..." 
+               style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white;">
+    </div>
+
+    <form action="/produtos/novo" method="post" style="margin-bottom: 30px;">
         <input type="text" name="nome" placeholder="Nome do Produto" required>
         <input type="number" name="qtd" placeholder="Qtd" required>
         <input type="number" step="0.01" name="preco" placeholder="Preço" required>
         <select name="cat_id">
             {% for cat in categorias %}
-        <option value="{{ cat.id }}">{{ cat.nome }}</option>
+                <option value="{{ cat.id }}">{{ cat.nome }}</option>
             {% endfor %}
         </select>
-            <button type="submit">Adicionar</button>
+        <button type="submit">Adicionar</button>
     </form>
+
     <table>
-    <tr>
-        <th>Nome</th><th>Qtd</th><th>Preço</th><th>Categoria</th><th>Ações</th>
-    </tr>
-    {% for p in produtos %}
-    <tr>
-        <td>{{ p.nome }}</td>
-        <td>
-            <form action="/produtos/atualizar/{{ p.id }}" method="post" style="display: flex; gap: 5px;">
-                <input type="number" name="nova_qtd" value="{{ p.quantidade }}" 
-                    style="width: 60px; padding: 4px; text-align: center;">
-                <button type="submit" style="padding: 5px 10px; font-size: 12px; background: #3498db;">
-                    💾
-                </button>
-            </form>
-        </td>
-        <td>R$ {{ p.preco }}</td>
-        <td>{{ p.categoria.nome }}</td>
-        <td><a href="/produtos/deletar/{{ p.id }}" style="color: #ff5555;">Excluir</a></td>
-    </tr>
-    {% endfor %}
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Qtd</th>
+                <th>Preço</th>
+                <th>Categoria</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for p in produtos %}
+
+            <tr x-show="'{{ p.nome.lower() }}'.includes(busca.toLowerCase())" x-transition>
+                <td>{{ p.nome }}</td>
+                
+                <td x-data="{ qtdLocal: {{ p.quantidade }} }">
+                    <form action="/produtos/atualizar/{{ p.id }}" method="post" style="display: flex; gap: 5px; align-items: center;">
+                        <input type="number" 
+                               name="nova_qtd" 
+                               x-model="qtdLocal" 
+                               style="width: 65px; padding: 4px; text-align: center; transition: all 0.3s;"
+                               :style="qtdLocal < 5 ? 'border-color: #ff5555; color: #ff5555; font-weight: bold; background: rgba(255, 85, 85, 0.1);' : ''">
+                        
+                        <button type="submit" style="padding: 5px 10px; font-size: 12px; background: #3498db;">
+                            💾
+                        </button>
+
+                        <template x-if="qtdLocal == 0">
+                            <span style="font-size: 9px; background: #ff5555; color: white; padding: 2px 5px; border-radius: 3px; margin-left: 5px;">FALTA</span>
+                        </template>
+                        <template x-if="qtdLocal > 0 && qtdLocal < 5">
+                            <span style="font-size: 9px; background: #f1c40f; color: black; padding: 2px 5px; border-radius: 3px; margin-left: 5px;">BAIXO</span>
+                        </template>
+                    </form>
+                </td>
+
+                <td>R$ {{ "%.2f"|format(p.preco) }}</td>
+
+                <td>{{ p.categoria.nome }}</td>
+
+                <td x-data="{ confirmando: false }">
+                    <a href="javascript:void(0)" 
+                    x-show="!confirmando" 
+                    @click="confirmando = true" 
+                    style="color: #ff0000; text-decoration: none; font-size: 14px;">
+                        Excluir
+                    </a>
+
+                    <div x-show="confirmando" 
+                        x-transition 
+                        style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                        
+                        <span style="font-size: 11px; color: #f1c40f; font-weight: bold;">Certeza?</span>
+                        
+                        <a href="/produtos/deletar/{{ p.id }}" 
+                        style="background: #ff0000; color: white; padding: 2px 6px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: bold;">
+                        SIM
+                        </a>
+                
+                        <button type="button" 
+                                @click="confirmando = false" 
+                                style="background: #585858; color: white; border: none; padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                            NÃO
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
+
 {% endblock %}

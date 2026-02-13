@@ -1,10 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
+
+<div class="card" x-data="{ busca: '' }">
     <h1>🏷️ Gerenciar Categorias</h1>
     <p>Você precisa cadastrar uma categoria antes de adicionar produtos.</p>
     
+    <div style="margin-bottom: 20px;">
+        <input type="text" 
+               x-model="busca" 
+               placeholder="🔍 Filtrar categorias existentes..." 
+               style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white;">
+    </div>
+
     <form action="/categorias/nova" method="post" style="margin-bottom: 30px;">
         <input type="text" name="nome" placeholder="Ex: Hardware" required>
         <button type="submit">Cadastrar Categoria</button>
@@ -15,24 +23,56 @@
             <tr>
                 <th>ID</th>
                 <th>Nome</th>
-                <th>Ação</th>
+                <th style="text-align: center;">Ação</th>
             </tr>
         </thead>
+
         <tbody>
             {% for cat in categorias %}
-            <tr>
+            <tr x-show="'{{ cat.nome.lower() }}'.includes(busca.toLowerCase())" x-transition>
                 <td>{{ cat.id }}</td>
                 <td>{{ cat.nome }}</td>
-                <td><a href="/categorias/deletar/{{ cat.id }}" style="color: #ff5555;">Excluir</a></td>
+                
+                <td x-data="{ confirmando: false }" style="text-align: center;">
+                    <a href="javascript:void(0)" 
+                       x-show="!confirmando" 
+                       @click="confirmando = true" 
+                       style="color: #ff5555; text-decoration: none; font-size: 14px;">
+                       Excluir
+                    </a>
+
+                    <div x-show="confirmando" 
+                         x-transition 
+                         style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                        
+                        <span style="font-size: 11px; color: #f1c40f; font-weight: bold;">Apagar?</span>
+                        
+                        <a href="/categorias/deletar/{{ cat.id }}" 
+                           style="background: #ff5555; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: bold;">
+                           SIM
+                        </a>
+                        
+                        <button type="button" 
+                                @click="confirmando = false" 
+                                style="background: #555; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                            NÃO
+                        </button>
+                    </div>
+                </td>
             </tr>
+
             {% else %}
+
             <tr>
                 <td colspan="3" style="text-align: center; padding: 20px;">
                     Nenhuma categoria encontrada. Cadastre uma acima!
                 </td>
             </tr>
+
             {% endfor %}
+            
         </tbody>
     </table>
 </div>
+
 {% endblock %}

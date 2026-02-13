@@ -1,31 +1,99 @@
 {% extends "base.html" %}
+
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<div class="card">
-<h2>Distribuição de Produtos (Pizza)</h2>
-<canvas id="pieChart" width="400" height="150"></canvas>
+
+<div class="container" x-data="graficoComponent()">
+    <div class="card">
+        <h2>📊 Distribuição por Produto</h2>
+        <div style="height: 400px; width: 100%; max-width: 600px; margin: 0 auto;">
+            <canvas x-ref="canvasPizza"></canvas>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h2>📈 Evolução de Quantidades</h2>
+        <div style="height: 300px;">
+            <canvas x-ref="canvasLinha"></canvas>
+        </div>
+    </div>
 </div>
-<div class="card">
-<h2>Níveis de Estoque (Linha)</h2>
-<canvas id="lineChart" width="400" height="150"></canvas>
-</div>
+
 <script>
-const labels = {{ labels|safe }};
-const dataVals = {{ valores|safe }};
-new Chart(document.getElementById('pieChart'), {
-type: 'pie',
-data: {
-labels: labels,
-datasets: [{ data: dataVals, backgroundColor: ['#2ecc71', '#3498db', '#9b59b6', '#f1c40f',
-'#e67e22'] }]
-}
-});
-new Chart(document.getElementById('lineChart'), {
-type: 'line',
-data: {
-labels: labels,
-datasets: [{ label: 'Qtd em Estoque', data: dataVals, borderColor: '#2ecc71', fill: false }]
-}
-});
+    function graficoComponent() {
+        return {
+            // Usamos |tojson|safe para evitar quebras de caracteres
+            labels: {{ labels|tojson|safe }},
+            valores: {{ valores|tojson|safe }},
+            
+            init() {
+                // Pequeno delay para garantir que o DOM e o Alpine estejam 100% prontos
+                this.$nextTick(() => {
+                    this.renderizar();
+                });
+            },
+
+            renderizar() {
+                // 1. Gráfico de Pizza com Legenda Lateral
+                new Chart(this.$refs.canvasPizza, {
+                    type: 'pie',
+                    data: {
+                        labels: this.labels,
+                        datasets: [{ 
+                            data: this.valores, 
+                            backgroundColor: [
+                                '#2ecc71', '#3498db', '#9b59b6', '#f1c40f', '#e67e22', 
+                                '#1abc9c', '#e74c3c', '#34495e', '#7f8c8d', '#27ae60'
+                            ] 
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'right', // Legenda na lateral direita resolve o atropelo
+                                align: 'center',
+                                labels: {
+                                    color: '#fff',
+                                    padding: 15,
+                                    font: { size: 12 },
+                                    boxWidth: 12
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // 2. Gráfico de Linha
+                new Chart(this.$refs.canvasLinha, {
+                    type: 'line',
+                    data: {
+                        labels: this.labels,
+                        datasets: [{ 
+                            label: 'Qtd em Estoque', 
+                            data: this.valores, 
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.3 
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#333' } },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { labels: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+        }
+    }
 </script>
 {% endblock %}

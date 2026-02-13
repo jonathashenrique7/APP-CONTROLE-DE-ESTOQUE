@@ -9,3 +9,8 @@ venv/
 # IDEs
 .vscode/
 .idea/
+
+# Pastas de Backup
+backups/
+
+.env

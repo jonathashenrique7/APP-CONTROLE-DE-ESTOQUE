@@ -1,23 +1,49 @@
+import os  # <-- ADICIONADO: Necessário para manipular pastas
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-import models, backend # Atualizado: de database para backend
+from backup import realizar_backup 
+import models, backend 
 
-# Atualizado: backend.engine
+# Inicialização do Banco de Dados
 models.Base.metadata.create_all(bind=backend.engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# Injeção de Dependência do Banco
 def get_db():
-    db = backend.SessionLocal() # Atualizado: backend.SessionLocal
+    db = backend.SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+# --- EVENTOS DE CICLO DE VIDA ---
+
+@app.on_event("startup")
+def startup_event():
+    """Roda ao ligar o servidor"""
+    if not os.path.exists("backups"):
+        os.makedirs("backups")
+    print("\n" + "="*30)
+    print("🚀 SISTEMA DE ESTOQUE ONLINE")
+    print("📂 Pasta de backups verificada.")
+    print("="*30 + "\n")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    """Roda ao desligar (Ctrl + C)"""
+    print("\n" + "!"*30)
+    print("💾 Iniciando backup de segurança...")
+    realizar_backup()
+    print("👋 Servidor encerrado com sucesso.")
+    print("!"*30 + "\n")
+
+# --- ROTAS DO SISTEMA ---
 
 @app.get("/")
 def dashboard(request: Request, db: Session = Depends(get_db)):
@@ -26,13 +52,10 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/produtos/atualizar/{id}")
 def atualizar_estoque(id: int, nova_qtd: int = Form(...), db: Session = Depends(get_db)):
-    # Busca o produto no banco pelo ID
     prod = db.query(models.Produto).filter(models.Produto.id == id).first()
-    
     if prod:
-        prod.quantidade = nova_qtd  # Atualiza o valor
-        db.commit()                 # Salva no banco
-        
+        prod.quantidade = nova_qtd
+        db.commit()
     return RedirectResponse(url="/produtos", status_code=303)
 
 @app.get("/categorias")
