@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 venv/
 
-# Banco de Dados (Não envie seu banco de testes)
+# Banco de Dados
 *.db
 
 # IDEs
